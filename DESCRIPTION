@@ -1,8 +1,8 @@
 Package: scCRISPR
-Title: What the Package Does (One Line, Title Case)
+Title: Pipeline of single-cell crispr screen analysis
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
+    person("Jun", "Qian", , "junqian.pumc@foxmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: What the package does (one paragraph).
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
@@ -10,3 +10,16 @@ License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
+Imports: 
+  Rsamtools (>= 2.6.0),
+  parallel (>= 4.0.3),
+  GenomicRanges (>= 1.42.0),
+  ChIPseeker (>=1.26.2)
+  data.table (>= 1.14.2)
+Suggests:
+  org.Mm.eg.db,
+  org.Hs.eg.db,
+  TxDb.Hsapiens.UCSC.hg19.knownGene,
+  TxDb.Hsapiens.UCSC.hg38.knownGene,
+  TxDb.Mmusculus.UCSC.mm9.knownGene,
+  TxDb.Mmusculus.UCSC.mm10.knownGene
