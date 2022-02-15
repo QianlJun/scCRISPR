@@ -14,8 +14,13 @@ Imports:
   Rsamtools (>= 2.6.0),
   parallel (>= 4.0.3),
   GenomicRanges (>= 1.42.0),
-  ChIPseeker (>=1.26.2)
-  data.table (>= 1.14.2)
+  ChIPseeker (>= 1.26.2),
+  data.table (>= 1.14.2),
+  seqinr,
+  utils (>= 4.0.3),
+  mgsub (>= 1.7.3),
+  stringi
+  
 Suggests:
   org.Mm.eg.db,
   org.Hs.eg.db,
