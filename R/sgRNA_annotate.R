@@ -143,12 +143,12 @@ sgRNA_annotation_org <- function(sgRNA.data, fasta, species, refgenome, txdb){
   return(anno.result)
 }
 
-sgRNA_annotation <- function(sgPath, fasta, species, refgenome, output = NULL){
+sgRNA_annotate <- function(sgPath, fasta, species, refgenome, output = NULL){
   if (is.null(output)){
-    output = paste(getwd(), "/output/sgRNA_annotation", sep = "")
+    output = paste(getwd(), "/output/sgRNA_annotate", sep = "")
     dir.create(output)
   } else {
-    output = paste(output, "/output/sgRNA_annotation", sep = "")
+    output = paste(output, "/output/sgRNA_annotate", sep = "")
     dir.create(output)
   }
 

@@ -19,7 +19,8 @@ Imports:
   seqinr,
   utils (>= 4.0.3),
   mgsub (>= 1.7.3),
-  stringi
+  stringi,
+  ggplot2 (>= 3.3.5)
   
 Suggests:
   org.Mm.eg.db,
