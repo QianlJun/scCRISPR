@@ -20,8 +20,11 @@ Imports:
   utils (>= 4.0.3),
   mgsub (>= 1.7.3),
   stringi,
-  ggplot2 (>= 3.3.5)
-  
+  ggplot2 (>= 3.3.5),
+  Seurat (>= 4.0.2),
+  SCENIC (>= 1.2.4),
+  AUCell (>= 1.12.0),
+  reticulate (>= 1.24)
 Suggests:
   org.Mm.eg.db,
   org.Hs.eg.db,

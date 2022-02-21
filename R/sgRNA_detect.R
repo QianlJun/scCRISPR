@@ -1,9 +1,14 @@
 # load bamfile
-load_bam <- function(bampath, params, outpath){
+load_bam <- function(bampath, params, outpath, cores){
   start_time <- Sys.time()
   print("loading bamfile")
   print(paste("start time: ", start_time, sep = ""))
 
+  if (is.null(cores)){
+    mc.cores = data.table::getDTthreads()
+  } else {
+    mc.cores = cores
+  }
   yieldSize(bampath) <- yieldsize
   open(bampath)
   end = 0
@@ -18,7 +23,7 @@ load_bam <- function(bampath, params, outpath){
     }
 
     if (length(bam$qname) > 0){
-      qnames <- parallel::pvec(seq_along(bam$seq), function(i){bam$qname[i][grep(bc, bam$seq[i], ignore.case = FALSE)]}, mc.cores=data.table::getDTthreads())
+      qnames <- parallel::pvec(seq_along(bam$seq), function(i){bam$qname[i][grep(bc, bam$seq[i], ignore.case = FALSE)]}, mc.cores=mc.cores)
       num <- which(bam$qname %in% qnames)
       bam <- lapply(bam, function(x){x[num]})
 
@@ -228,7 +233,7 @@ filter_result <- function(unmap.result){
 }
 
 sgRNA_detect <- function(bamPath, sgPath, output = NULL, species, refgenome,
-                         cores, search_mapped = FALSE, yieldsize = 10000000){
+                         cores = NULL, search_mapped = FALSE, yieldsize = 10000000){
   if (is.null(output)){
     output = paste(getwd(), "/output/sgRNA_detect", sep = "")
     dir.create(output)
@@ -258,7 +263,7 @@ sgRNA_detect <- function(bamPath, sgPath, output = NULL, species, refgenome,
 
   params.unmap <- Rsamtools::ScanBamParam(what = c("qname","flag","rname","strand","pos","qwidth","seq"), tag = c("CB","UB"), flag = scanBamFlag(isUnmappedQuery = TRUE))
   tmp1 <- paste(output,"/tmp1.txt", sep = "")
-  load_bam(bamFile, params.unmap, tmp1)
+  load_bam(bamFile, params.unmap, tmp1, cores)
 
   if (file.exists(tmp1)){
     bam.unmap <- data.table::fread(tmp1, sep = "\t", data.table = FALSE, showProgress = FALSE, na.strings = NULL, skip = "-")

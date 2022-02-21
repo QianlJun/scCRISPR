@@ -1,4 +1,4 @@
-sgRNA_percent <- function(sgcount, barcode, output){
+sgRNA_percent <- function(sgcount, barcode, output = NULL){
   if (is.null(output)){
     output = paste(getwd(), "/output/sgRNA_percent", sep = "")
     dir.create(output)
