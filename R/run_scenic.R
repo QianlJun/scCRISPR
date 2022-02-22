@@ -37,7 +37,7 @@ run_scenic <- function(filepath, species, refgenome, dbDir, myDatasetTitle = "My
   seurat.obj <- readRDS(filepath)
   exprMat <- as.matrix(seurat.obj@assays$RNA@counts)
   cellInfo <- seurat.obj@meta.data
-  scenicOptions <- initializeScenic(org=org, dbDir=dbDir, dbs=dbs, datasetTitle=myDatasetTitle, nCores=ncores)
+  scenicOptions <- SCENIC::initializeScenic(org=org, dbDir=dbDir, dbs=dbs, datasetTitle=myDatasetTitle, nCores=ncores)
   saveRDS(cellInfo, file="int/cellInfo.rds")
   scenicOptions@inputDatasetInfo$cellInfo <- "int/cellInfo.Rds"
 
@@ -47,7 +47,7 @@ run_scenic <- function(filepath, species, refgenome, dbDir, myDatasetTitle = "My
     seed <- 201
   }
 
-  genesKept <- geneFiltering(exprMat, scenicOptions=scenicOptions,
+  genesKept <- SCENIC::geneFiltering(exprMat, scenicOptions=scenicOptions,
                              minCountsPerGene=3*.01*ncol(exprMat),
                              minSamples=ncol(exprMat)*.01)
 
@@ -61,44 +61,50 @@ run_scenic <- function(filepath, species, refgenome, dbDir, myDatasetTitle = "My
     interestingGenes <- c(target.genes, interest.genes)
   }
 
+  filtered.genes <- interestingGenes[!interestingGenes %in% genesKept]
+  write.table(filtered.genes, paste(output,"/int/interestingGenes filtered by geneFiltering.txt", sep = ""),quote = F,col.names = F,row.names = F)
+
   genesKept <- unique(c(interestingGenes, genesKept))
   saveRDS(genesKept, "int/1.1_genesKept.Rds")
 
   exprMat_filtered <- exprMat[genesKept, ]
-  runCorrelation(exprMat_filtered, scenicOptions)
+  SCENIC::runCorrelation(exprMat_filtered, scenicOptions)
   exprMat_filtered <- log2(exprMat_filtered+1)
 
 
-
   # except TFs in database, we add some interesting genes, such as target genes as candidate TFs to build GRN
-  candidate.TFs <- unique(c(getDbTfs(scenicOptions), interestingGenes))
+  candidate.TFs <- unique(c(SCENIC::getDbTfs(scenicOptions), interestingGenes))
 
   if (method == "GENIE3"){
-    runGenie3(exprMat_filtered, scenicOptions, allTFs = candidate.TFs)
+    SCENIC::runGenie3(exprMat_filtered, scenicOptions, allTFs = candidate.TFs)
   } else if (method == "GRNBoost2"){
-    exportsForArboreto(exprMat_filtered, scenicOptions, dir = "int")
+    SCENIC::exportsForArboreto(exprMat_filtered, scenicOptions, dir = "int")
     run_grnboost2(output, cores, seed)
-    py_run_file(paste(getwd(),"/.run_grnboost2.py",sep=""))
+    reticulate::py_run_file(paste(getwd(),"/.run_grnboost2.py",sep=""))
     grnboost.op <- read.table(paste(output,"/int/output_grnboost.tsv", sep=""),header = F,sep = "\t")
     colnames(grnboost.op) <- c("TF", "Target", "weight")
     saveRDS(grnboost.op, paste(output,"/int/1.4_GENIE3_linkList.Rds", sep=""))
+  } else {
+    print("Only GENIE3 or GRNBoost2 support now.")
   }
 
   exprMat_log <- log2(exprMat+1)
 
-  scenicOptions <- runSCENIC_1_coexNetwork2modules(scenicOptions)
-  scenicOptions <- runSCENIC_2_createRegulons(scenicOptions)
+  scenicOptions <- SCENIC::runSCENIC_1_coexNetwork2modules(scenicOptions)
+  scenicOptions <- SCENIC::runSCENIC_2_createRegulons(scenicOptions)
 
 
-  scenicOptions <- initializeScenic(org=org, dbDir=dbDir, dbs=mm10_dbs, datasetTitle=myDatasetTitle, nCores=1)
+  scenicOptions <- SCENIC::initializeScenic(org=org, dbDir=dbDir, dbs=mm10_dbs, datasetTitle=myDatasetTitle, nCores=1)
 
 
-  # check intersetingGenes exist or not in regulons
+  # check if interestingGenes exist or not in regulons
   regulons <- readRDS("int/2.6_regulons_asGeneSet.Rds")
   regulons <- regulons[lengths(regulons)>=10]
   TFs <- unique(c(names(regulons)[grep("_extended", names(regulons), invert = TRUE)],
                   gsub("_extended","",names(regulons)[grep("_extended", names(regulons))])))
   Tfs.add <- interestingGenes[!interestingGenes %in% TFs]
+  write.table(Tfs.add, paste(output,"/int/interestingGenes not in regulons_asGeneSet.txt", sep = ""),quote = F,col.names = F,row.names = F)
+
   cormat <- readRDS("int/1.2_corrMat.Rds")
   weightMatrix <- readRDS("int/1.4_GENIE3_linkList.Rds")
   weightMatrix <- weightMatrix[weightMatrix$weight > 0.001,]
@@ -126,21 +132,25 @@ run_scenic <- function(filepath, species, refgenome, dbDir, myDatasetTitle = "My
       tag.list[[j]] <- regulons[[paste(tf,"_extended",sep = "")]]
     }
   }
-  cells_rankings <- AUCell_buildRankings(exprMat_log, nCores=1, plotStats=TRUE)
-  cells_AUC.regulon <- AUCell_calcAUC(tag.list, cells_rankings, nCores = 1)
+  cells_rankings <- AUCell::AUCell_buildRankings(exprMat_log, nCores=1, plotStats=TRUE)
+  cells_AUC.regulon <- AUCell::AUCell_calcAUC(tag.list, cells_rankings, nCores = 1)
   saveRDS(cells_AUC.regulon, "int/scoreTargetGeneregulon.rds")
 
 
-
   # filter regulon < 10 genes first, then score regulon
-  scenicOptions <- runSCENIC_3_scoreCells(scenicOptions, exprMat_log)
+  scenicOptions <- SCENIC::runSCENIC_3_scoreCells(scenicOptions, exprMat_log)
   scenicOptions@fileNames$output["loomFile",] <- "output/SCENIC.loom"
   #saveRDS(scenicOptions, file="int/scenicOptions.Rds")
-  scenicOptions <- runSCENIC_4_aucell_binarize(scenicOptions)
+  scenicOptions <- SCENIC::runSCENIC_4_aucell_binarize(scenicOptions)
   saveRDS(scenicOptions, file="int/scenicOptions.Rds")
-  export2loom(scenicOptions, exprMat)
+  SCENIC::export2loom(scenicOptions, exprMat)
 
   # score regulons(targets genes) separately
+
+  # delete tmp file
+  if (file.exists(paste(getwd(),"/.run_grnboost2.py",sep=""))){
+    file.remove(paste(getwd(),"/.run_grnboost2.py",sep=""))
+  }
 
   setwd(prepath)
 }
