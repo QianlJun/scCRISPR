@@ -9,7 +9,7 @@ run_scenic <- function(filepath, species, refgenome, dbDir, myDatasetTitle = "My
   }
 
   if (is.null(nontarget)){
-    print("Please tell the name of non-targert gene use parameter:nontarget")
+    print("Please allocate the name of non-targert gene use parameter:nontarget")
   }
 
   prepath <- getwd()
