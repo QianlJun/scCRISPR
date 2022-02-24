@@ -1,11 +1,15 @@
 run_scenic <- function(filepath, species, refgenome, dbDir, myDatasetTitle = "Mydata",
-                       output = NULL, nontarget, method = "GENIE3", seed = NULL, interest.genes = NULL, cores = NULL){
+                       output = NULL, nontarget = NULL, method = "GENIE3", seed = NULL, interest.genes = NULL, cores = NULL){
   if (is.null(output)){
     output = paste(getwd(), "/output/run_scenic", sep = "")
     dir.create(output)
   } else {
     output = paste(output, "/output/run_scenic", sep = "")
     dir.create(output)
+  }
+
+  if (is.null(nontarget)){
+    print("Please tell the name of non-targert gene use parameter:nontarget")
   }
 
   prepath <- getwd()
