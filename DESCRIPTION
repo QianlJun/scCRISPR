@@ -24,7 +24,8 @@ Imports:
   Seurat (>= 4.0.2),
   SCENIC (>= 1.2.4),
   AUCell (>= 1.12.0),
-  reticulate (>= 1.24)
+  reticulate (>= 1.24),
+  ggpubr
 Suggests:
   org.Mm.eg.db,
   org.Hs.eg.db,
