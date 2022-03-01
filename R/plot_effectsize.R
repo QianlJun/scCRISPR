@@ -14,7 +14,7 @@ plot_effectsize <- function(filepath, nontarget = NULL, output, sgRNAcut = 30){
   seurat.obj <- readRDS(filepath)
 
   # filter sgRNA  < 30 cells support
-  tmp <- table(seurat.obj$barcode)
+  tmp <- table(seurat.obj$sgRNA_name)
   sgRNA.keep <- names(tmp)[tmp >= sgRNAcut]
   cells.keep <- Seurat::WhichCells(seurat.obj, expression = sgRNA_name %in% sgRNA.keep)
   seurat.obj <- subset(seurat.obj, cells = cells.keep)
