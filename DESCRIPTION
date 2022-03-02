@@ -25,7 +25,8 @@ Imports:
   SCENIC (>= 1.2.4),
   AUCell (>= 1.12.0),
   reticulate (>= 1.24),
-  ggpubr
+  ggpubr,
+  clusterProfiler
 Suggests:
   org.Mm.eg.db,
   org.Hs.eg.db,
