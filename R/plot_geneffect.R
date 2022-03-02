@@ -1,5 +1,6 @@
 plot_geneffect <- function(filepath, nontarget = NULL, output, sgRNAcut = 30, sgRNA = NULL,
-                           targetgene = NULL, gene = NULL, test.use = "wilcox"){
+                           targetgene = NULL, gene = NULL, test.use = "wilcox", species = NULL, GO = FALSE,
+                           KEGG = FALSE, GSEA = FALSE, plot = FALSE, topTerm = 10){
   if (is.null(output)){
     output = paste(getwd(), "/output/plot_geneffect", sep = "")
     dir.create(output)
@@ -30,7 +31,7 @@ plot_geneffect <- function(filepath, nontarget = NULL, output, sgRNAcut = 30, sg
   genes <- unique(seurat.obj$target_gene)
   genes <- genes[-which(genes == nontarget)]
 
-  rna.data <- GetAssayData(seurat.obj,assay = "RNA",slot = "data")
+  rna.data <- Seurat::GetAssayData(seurat.obj,assay = "RNA",slot = "data")
   rna.data <- as.data.frame(rna.data)
 
 
@@ -67,8 +68,8 @@ plot_geneffect <- function(filepath, nontarget = NULL, output, sgRNAcut = 30, sg
     tmp <- as.data.frame(t(tmp))
     colnames(tmp) <- "value"
     tmp$sgRNA <- factor(rownames(tmp),levels = rownames(tmp))
-    p1 <- ggplot(tmp,aes(x=sgRNA,y=value)) + geom_point() + theme_bw() + geom_hline(aes(yintercept=1),colour="Red",linetype="dashed") + xlab("")
-    ggsave(paste(output,"/",i,".png",sep = ""),p1,width = 4,height = 4)
+    p1 <- ggplot2::ggplot(tmp,aes(x=sgRNA,y=value)) + ggplot2::geom_point() + ggplot2::theme_bw() + ggplot2::geom_hline(aes(yintercept=1),colour="Red",linetype="dashed") + ggplot2::xlab("")
+    ggplot2::ggsave(paste(output,"/",i,".png",sep = ""),p1,width = 4,height = 4)
     }
 
   # violin plot
@@ -76,11 +77,11 @@ plot_geneffect <- function(filepath, nontarget = NULL, output, sgRNAcut = 30, sg
   seurat.obj$tmp_label[seurat.obj$target_gene == targetgene] <- paste(targetgene," KO",sep = "")
   seurat.obj$tmp_label <- factor(seurat.obj$tmp_label, levels = c("Non-Targeting", paste(targetgene," KO",sep = "")))
   pdf(paste(output,"/", targetgene,"_violinplot.pdf",sep = ""), width = 6, height = 4)
-  VlnPlot(subset(seurat.obj, cells = WhichCells(seurat.obj, expression = target_gene %in% c(targetgene,"Non-Targeting"))), features = c(targetgene),group.by = "orig.ident", adjust = 2, assay = "RNA", pt.size = 0.1, split.by = "tmp_label", split.plot = TRUE)
+  Seurat::VlnPlot(subset(seurat.obj, cells = WhichCells(seurat.obj, expression = target_gene %in% c(targetgene,"Non-Targeting"))), features = c(targetgene),group.by = "orig.ident", adjust = 2, assay = "RNA", pt.size = 0.1, split.by = "tmp_label", split.plot = TRUE)
   dev.off()
 
   # ko vs nontarget
-  markers <- FindMarkers(seurat.obj, ident.1=sgRNA, ident.2=nontargetsgRNA ,test.use = test.use, min.pct = 0, logfc.threshold = 0, only.pos = FALSE, assay = "RNA")
+  markers <- Seurat::FindMarkers(seurat.obj, ident.1=sgRNA, ident.2=nontargetsgRNA ,test.use = test.use, min.pct = 0, logfc.threshold = 0, only.pos = FALSE, assay = "RNA")
   markers$gene <- rownames(markers)
   markers <- markers[,c(6,1:5)]
   markers$effect <- "none"
@@ -114,4 +115,33 @@ plot_geneffect <- function(filepath, nontarget = NULL, output, sgRNAcut = 30, sg
   #     }
   # }
 
+  if (GO){
+    if (is.null(species)){
+      print("Please assign the species parameter to use GO, KEGG and GSEA")
+    } else {
+      upgenes <- markers$gene[markers$effect == "up" & markers$reliability >= 3]
+      downgenes <- markers$gene[markers$effect == "up" & markers$reliability >= 3]
+      run_GO(upgenes, type = "SYMBOL", species, paste(output, "/up_GO",sep = ""), plot, topTerm)
+      run_GO(downgenes, type = "SYMBOL", species, paste(output, "/down_GO",sep = ""), plot, topTerm)
+    }
+  }
+
+  if (KEGG){
+    if (is.null(species)){
+      print("Please assign the species parameter to use GO, KEGG and GSEA")
+    } else {
+      upgenes <- markers$gene[markers$effect == "up" & markers$reliability >= 3]
+      downgenes <- markers$gene[markers$effect == "up" & markers$reliability >= 3]
+      run_KEGG(upgenes, type = "SYMBOL", species, paste(output, "/up_KEGG",sep = ""), plot, topTerm)
+      run_KEGG(downgenes, type = "SYMBOL", species, paste(output, "/down_KEGG",sep = ""), plot, topTerm)
+    }
+  }
+
+  if (GSEA){
+    if (is.null(species)){
+      print("Please assign the species parameter to use GO, KEGG and GSEA")
+    } else {
+      run_GSEA(markers, species, paste(output, "/GSEA",sep = ""), plot, topTerm)
+    }
+  }
 }
